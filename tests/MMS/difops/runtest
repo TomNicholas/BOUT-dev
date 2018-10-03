@@ -16,8 +16,9 @@ from sys import exit
 # geometry for simple circular tokamak
 tokamak = SimpleTokamak()
 
-def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_operator, stagger):
+def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_operator, order, stagger):
 
+    error_list = []
     for n in ngrids:
         print('testing',n)
         # set options
@@ -75,14 +76,25 @@ def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_oper
         # calculate max error
         error = bout_result - analytic_result # as Field3D
         error = error.get()[mxg:-mxg, myg:-myg, :] # numpy array, without guard cells
-        error = numpy.max(numpy.abs(error)) # max error
+        error_list.append(numpy.max(numpy.abs(error))) # max error
 
-        print(error)
+    logerrors = numpy.log(error_list[-2]/error_list[-1])
+    logspacing = numpy.log(ngrids[-1]/ngrids[-2])
+    convergence = logerrors/logspacing
 
-    return ['pass']
+    if order-.1 < convergence < order+.1:
+        return ['pass']
+    else:
+        from matplotlib import pyplot
+        pyplot.loglog(1./ngrids, error_list)
+        pyplot.show()
+        from boututils.showdata import showdata
+        showdata(error)
+        return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
-def cycle_staggering(stagger_directions, ngrids, testfunc, directions, boutcore_operator, symbolic_operator):
-    staggers = [None]
+def cycle_staggering(stagger_directions, ngrids, testfunc, directions, boutcore_operator, symbolic_operator, order):
+    #staggers = [None, ('XLOW', 'XLOW'), ('YLOW', 'YLOW'), ('ZLOW', 'ZLOW')] # all derivatives at same inloc/outloc should work, but unfortunately interpolation means we'd have to refine the x-grid for XLOW/XLOW and y-grid for YLOW/YLOW so skip for now
+    staggers = [None] # all derivatives at same inloc/outloc should work
     if 'x' in stagger_directions:
         staggers += [('CENTRE', 'XLOW'), ('XLOW', 'CENTRE')]
     if 'y' in stagger_directions:
@@ -91,7 +103,7 @@ def cycle_staggering(stagger_directions, ngrids, testfunc, directions, boutcore_
         staggers += [('CENTRE', 'ZLOW'), ('ZLOW', 'CENTRE')]
     result = []
     for stagger in staggers:
-        result += test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_operator, stagger)
+        result += test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_operator, order, stagger)
     return result
 
 min_exponent = 4
@@ -101,12 +113,15 @@ default_n = 4
 mxg = 2
 myg = 2
 testfunc = "cos(2*pi*x+y+z)"
+order = 2
 
-#boutcore.init("-q -q -q -q")
-boutcore.init()
+boutcore.init("-q -q -q -q")
+#boutcore.init()
 
 results = []
-results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Grad_par, Grad_par)
+results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Grad_par, Grad_par, order)
+results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Div_par, Div_par, order)
+results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Laplace, Laplace, order)
 
 boutcore.finalise()
 
