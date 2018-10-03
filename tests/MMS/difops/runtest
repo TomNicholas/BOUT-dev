@@ -121,7 +121,7 @@ boutcore.init("-q -q -q -q")
 results = []
 results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Grad_par, Grad_par, order)
 results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Div_par, Div_par, order)
-results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Laplace, Laplace, order)
+results += test_operator(numpy.array([32,64]), testfunc, 'xyz', boutcore.Laplace, Laplace, order, None) # Laplace is only implemented inloc=outloc
 
 boutcore.finalise()
 
