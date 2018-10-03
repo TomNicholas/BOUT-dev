@@ -1187,7 +1187,7 @@ do
     funbad
 done
 
-for DD in Vpar_Grad_par
+for DD in Vpar_Grad_par Div_par_flux
 do
     in1="Field3D velocity, Field3D field"
     in2="velocity.cobj[0], field.cobj[0]"
