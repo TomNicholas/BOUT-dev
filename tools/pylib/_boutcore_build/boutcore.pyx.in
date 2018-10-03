@@ -1179,7 +1179,7 @@ def $DD($in1, outloc="CELL_DEFAULT", method="DIFF_DEFAULT", region="RGN_NOBNDRY"
 EOF
 }
 
-for DD in Div_par Grad_par
+for DD in Div_par Grad_par Grad2_par2
 do
     in1="Field3D field"
     in2="field.cobj[0]"
