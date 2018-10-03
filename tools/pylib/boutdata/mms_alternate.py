@@ -153,6 +153,10 @@ def Grad_par(f):
     """The parallel gradient"""
     return DDY(f) / sqrt(metric.g_22)
 
+def Grad2_par2(f):
+    """The parallel 2nd derivative"""
+    return Grad_par(Grad_par(f))
+
 def Vpar_Grad_par(v, f):
     """Parallel advection operator v*grad_||(f)"""
     return v * Grad_par(f)
