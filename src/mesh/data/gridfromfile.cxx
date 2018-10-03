@@ -367,6 +367,19 @@ bool GridFile::get(Mesh *UNUSED(m), vector<BoutReal> &var, const string &name,
   return true;
 }
 
+bool GridFile::hasYGuards(Mesh* m) {
+
+  ///Global (x,y) dimensions of field
+  // grid file should always contain "dx", so check size of that
+  const vector<int> field_dimensions = file->getSize("dx");
+
+  ///Check if field dimensions are correct. y-direction
+  if (field_dimensions[1] == m->GlobalNy) { ///including ghostpoints
+    return true;
+  } else { ///excluding ghostpoints
+    return false;
+  }
+}
 
 /////////////////////////////////////////////////////////////
 // Private routines
