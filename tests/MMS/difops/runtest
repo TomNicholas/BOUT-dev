@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+
+# MMS test for differential operators (that use the metric)
+
+import boutcore
+
+# requires boutcore
+# requires not make
+
+from boutdata.mms_alternate import *
+
+import numpy
+import sympy
+from sys import exit
+
+# geometry for simple circular tokamak
+tokamak = SimpleTokamak()
+
+def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_operator, stagger):
+
+    for n in ngrids:
+        print('testing',n)
+        # set options
+        boutcore.setOption("mxg", str(mxg), force=True)
+        boutcore.setOption("myg", str(myg), force=True)
+        # set up mesh input
+        if 'x' in directions:
+            boutcore.setOption("testmesh:nx", exprToStr(n+2*mxg), force=True)
+        else:
+            boutcore.setOption("testmesh:nx", exprToStr(default_n+2*mxg), force=True)
+        if 'y' in directions:
+            boutcore.setOption("testmesh:ny", exprToStr(n), force=True)
+        else:
+            boutcore.setOption("testmesh:ny", exprToStr(default_n), force=True)
+        if 'z' in directions:
+            boutcore.setOption("testmesh:nz", exprToStr(n), force=True)
+        else:
+            boutcore.setOption("testmesh:nz", exprToStr(default_n), force=True)
+        boutcore.setOption("testmesh:dx", exprToStr(metric.psiwidth/n), force=True)
+        boutcore.setOption("testmesh:dy", exprToStr(2.*pi/n), force=True)
+        boutcore.setOption("testmesh:dz", exprToStr(2.*pi/n), force=True)
+        boutcore.setOption("testmesh:g11", exprToStr(metric.g11), force=True)
+        boutcore.setOption("testmesh:g22", exprToStr(metric.g22), force=True)
+        boutcore.setOption("testmesh:g33", exprToStr(metric.g33), force=True)
+        boutcore.setOption("testmesh:g12", exprToStr(metric.g12), force=True)
+        boutcore.setOption("testmesh:g13", exprToStr(metric.g13), force=True)
+        boutcore.setOption("testmesh:g23", exprToStr(metric.g23), force=True)
+        boutcore.setOption("testmesh:g_11", exprToStr(metric.g_11), force=True)
+        boutcore.setOption("testmesh:g_22", exprToStr(metric.g_22), force=True)
+        boutcore.setOption("testmesh:g_33", exprToStr(metric.g_33), force=True)
+        boutcore.setOption("testmesh:g_12", exprToStr(metric.g_12), force=True)
+        boutcore.setOption("testmesh:g_13", exprToStr(metric.g_13), force=True)
+        boutcore.setOption("testmesh:g_23", exprToStr(metric.g_23), force=True)
+        if stagger is None:
+            boutcore.setOption("testmesh:staggergrids", str('false'), force=True)
+            inloc = 'CENTRE'
+            outloc = 'CENTRE'
+        else:
+            boutcore.setOption("testmesh:staggergrids", str('true'), force=True)
+            inloc = stagger[0]
+            outloc = stagger[1]
+
+        # create new Mesh object
+        mesh = boutcore.Mesh(section="testmesh")
+
+        # calculate result of differential operator using BOUT++ implementation
+        bout_input = boutcore.create3D(testfunc, mesh, outloc=inloc)
+        bout_result = boutcore_operator(bout_input, outloc=outloc)
+
+        # calculate result of differential operator symbolically, then convert to boutcore.Field3D
+        analytic_input = sympy.sympify(testfunc)
+        analytic_func = symbolic_operator(analytic_input)
+        analytic_result = boutcore.create3D(exprToStr(analytic_func), mesh, outloc=outloc)
+
+        # calculate max error
+        error = bout_result - analytic_result # as Field3D
+        error = error.get()[mxg:-mxg, myg:-myg, :] # numpy array, without guard cells
+        error = numpy.max(numpy.abs(error)) # max error
+
+        print(error)
+
+    return ['pass']
+
+def cycle_staggering(stagger_directions, ngrids, testfunc, directions, boutcore_operator, symbolic_operator):
+    staggers = [None]
+    if 'x' in stagger_directions:
+        staggers += [('CENTRE', 'XLOW'), ('XLOW', 'CENTRE')]
+    if 'y' in stagger_directions:
+        staggers += [('CENTRE', 'YLOW'), ('YLOW', 'CENTRE')]
+    if 'z' in stagger_directions:
+        staggers += [('CENTRE', 'ZLOW'), ('ZLOW', 'CENTRE')]
+    result = []
+    for stagger in staggers:
+        result += test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_operator, stagger)
+    return result
+
+min_exponent = 4
+max_exponent = 8
+ngrids = numpy.logspace(min_exponent, max_exponent, num=max_exponent-min_exponent+1, base=2, dtype=int)
+default_n = 4
+mxg = 2
+myg = 2
+testfunc = "cos(2*pi*x+y+z)"
+
+#boutcore.init("-q -q -q -q")
+boutcore.init()
+
+results = []
+results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Grad_par, Grad_par)
+
+boutcore.finalise()
+
+# check results of tests
+fail = False
+for result in results:
+    if result is not 'pass':
+        print(result)
+        fail = True
+if fail:
+    exit(1)
+else:
+    print('pass')
+    exit(0)
