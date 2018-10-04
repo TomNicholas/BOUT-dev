@@ -87,11 +87,12 @@ def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_oper
     if order-.1 < convergence < order+.1:
         return ['pass']
     else:
-        from matplotlib import pyplot
-        pyplot.loglog(1./ngrids, error_list)
-        pyplot.show()
-        from boututils.showdata import showdata
-        showdata(error)
+        if plot_error:
+            from matplotlib import pyplot
+            pyplot.loglog(1./ngrids, error_list)
+            pyplot.show()
+            from boututils.showdata import showdata
+            showdata(error)
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
 def cycle_staggering(stagger_directions, ngrids, testfunc, directions, boutcore_operator, symbolic_operator, order):
@@ -183,11 +184,12 @@ def test_operator2(ngrids, testfunc1, testfunc2, directions, boutcore_operator, 
     if order-.1 < convergence < order+.1:
         return ['pass']
     else:
-        #from matplotlib import pyplot
-        #pyplot.loglog(1./ngrids, error_list)
-        #pyplot.show()
-        #from boututils.showdata import showdata
-        #showdata([error, bout_result.get()[mxg:-mxg, myg:-myg], analytic_result.get()[mxg:-mxg, myg:-myg]])
+        if plot_error:
+            from matplotlib import pyplot
+            pyplot.loglog(1./ngrids, error_list)
+            pyplot.show()
+            from boututils.showdata import showdata
+            showdata([error, bout_result.get()[mxg:-mxg, myg:-myg], analytic_result.get()[mxg:-mxg, myg:-myg]])
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+' '+str(method)+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
 def cycle_staggering2(stagger_directions, ngrids, testfunc1, testfunc2, directions, boutcore_operator, symbolic_operator, order, method=None):
@@ -214,6 +216,7 @@ testfunc = "cos(2*pi*x+y+z)"
 testfunc = "cos(y+x)"
 testfunc2 = "sin(4*pi*x+2*y+2*z)+cos(2*pi*x-z)"
 order = 2
+plot_error = False
 
 boutcore.init("-q -q -q -q")
 #boutcore.init()
@@ -236,22 +239,20 @@ testlam = lambda v,f: Div_par(v*f)
 #results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xyz', boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, None, method="BRACKET_STD")
 
 # single-argument operators
-#results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Grad_par, Grad_par, order)
-#results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Div_par, Div_par, order)
-#results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Grad2_par2, Grad2_par2, order)
+results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Grad_par, Grad_par, order)
+results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Div_par, Div_par, order)
+results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Grad2_par2, Grad2_par2, order)
 results += cycle_staggering('', ngrids, testfunc, 'xyz', boutcore.Laplace, Laplace, order) # Laplace is only implemented inloc=outloc
 results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Laplace_par, Laplace_par, order) # Laplace is only implemented inloc=outloc
-#results += cycle_staggering('', ngrids, testfunc, 'xyz', boutcore.Laplace_perp, Laplace_perp, order) # Laplace is only implemented inloc=outloc
+results += cycle_staggering('', ngrids, testfunc, 'xyz', boutcore.Laplace_perp, Laplace_perp, order) # Laplace is only implemented inloc=outloc
 # Delp2 uses the global mesh, which we can't reset, so can't test here
 #results += cycle_staggering('x', ngrids, testfunc, 'xz', boutcore.Delp2, Delp2, order)
 
 # two-argument operators
-#results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'xyz', boutcore.Vpar_Grad_par, Vpar_Grad_par, order)
-#results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'xyz', boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1)
-#results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xyz', boutcore.bracket, bracket, order, method="BRACKET_ARAKAWA")
-#results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xyz', boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, method="BRACKET_STD")
-
-boutcore.finalise()
+results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'xyz', boutcore.Vpar_Grad_par, Vpar_Grad_par, order)
+results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'xyz', boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1)
+results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xyz', boutcore.bracket, bracket, order, method="BRACKET_ARAKAWA")
+results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xyz', boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, method="BRACKET_STD")
 
 # check results of tests
 fail = False
