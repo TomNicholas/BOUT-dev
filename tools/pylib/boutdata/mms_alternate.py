@@ -181,7 +181,7 @@ def Laplace_par(f):
     """
     Div( b (b.Grad(f) ) ) = (1/J) d/dy ( J/g_22 * df/dy )
     """
-    return DDY(metric.J/metric.g_22)*DDY(f)/ metric.J
+    return DDY( metric.J/metric.g_22 * DDY(f) )/ metric.J
 
 def Laplace_perp(f):
     """
