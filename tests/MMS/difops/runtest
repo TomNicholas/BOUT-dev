@@ -17,7 +17,7 @@ from sys import exit
 # geometry for simple circular tokamak
 tokamak = SimpleTokamak()
 
-def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_operator, order, stagger):
+def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger):
 
     error_list = []
     print('testing',boutcore_operator, stagger)
@@ -27,15 +27,15 @@ def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_oper
         boutcore.setOption("mxg", str(mxg), force=True)
         boutcore.setOption("myg", str(myg), force=True)
         # set up mesh input
-        if 'x' in directions:
+        if 'x' in dimensions:
             boutcore.setOption("testmesh:nx", exprToStr(n+2*mxg), force=True)
         else:
             boutcore.setOption("testmesh:nx", exprToStr(default_n+2*mxg), force=True)
-        if 'y' in directions:
+        if 'y' in dimensions:
             boutcore.setOption("testmesh:ny", exprToStr(n), force=True)
         else:
             boutcore.setOption("testmesh:ny", exprToStr(default_n), force=True)
-        if 'z' in directions:
+        if 'z' in dimensions:
             boutcore.setOption("testmesh:nz", exprToStr(n), force=True)
         else:
             boutcore.setOption("testmesh:nz", exprToStr(default_n), force=True)
@@ -84,7 +84,7 @@ def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_oper
     logspacing = numpy.log(ngrids[-1]/ngrids[-2])
     convergence = logerrors/logspacing
 
-    if order-.1 < convergence < order+.1:
+    if order-.1 < convergence < order+.2:
         return ['pass']
     else:
         if plot_error:
@@ -95,21 +95,27 @@ def test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_oper
             showdata(error)
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
-def cycle_staggering(stagger_directions, ngrids, testfunc, directions, boutcore_operator, symbolic_operator, order):
-    staggers = [None, ('XLOW', 'XLOW'), ('YLOW', 'YLOW'), ('ZLOW', 'ZLOW')] # all derivatives at same inloc/outloc should work, but unfortunately interpolation means we'd have to refine the x-grid for XLOW/XLOW and y-grid for YLOW/YLOW so skip for now
-    #staggers = [None]
+def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, boutcore_operator, symbolic_operator, order):
+    # all derivatives at same inloc/outloc should work
+    dimensions_staggers = [(base_dimensions, None),
+                           (base_dimensions+'x', ('XLOW', 'XLOW')),
+                           (base_dimensions+'y', ('YLOW', 'YLOW')),
+                           (base_dimensions+'z', ('ZLOW', 'ZLOW'))]
     if 'x' in stagger_directions:
-        staggers += [('CENTRE', 'XLOW'), ('XLOW', 'CENTRE')]
+        dimensions_staggers += [(base_dimensions+'x', ('CENTRE', 'XLOW')),
+                                (base_dimensions+'x', ('XLOW', 'CENTRE'))]
     if 'y' in stagger_directions:
-        staggers += [('CENTRE', 'YLOW'), ('YLOW', 'CENTRE')]
+        dimensions_staggers += [(base_dimensions+'y', ('CENTRE', 'YLOW')),
+                                (base_dimensions+'y', ('YLOW', 'CENTRE'))]
     if 'z' in stagger_directions:
-        staggers += [('CENTRE', 'ZLOW'), ('ZLOW', 'CENTRE')]
+        dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW')),
+                                (base_dimensions+'z', ('ZLOW', 'CENTRE'))]
     result = []
-    for stagger in staggers:
-        result += test_operator(ngrids, testfunc, directions, boutcore_operator, symbolic_operator, order, stagger)
+    for dimensions, stagger in dimensions_staggers:
+        result += test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger)
     return result
 
-def test_operator2(ngrids, testfunc1, testfunc2, directions, boutcore_operator, symbolic_operator, order, stagger, method=None):
+def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger):
 
     error_list = []
     print('testing',boutcore_operator, stagger)
@@ -119,15 +125,15 @@ def test_operator2(ngrids, testfunc1, testfunc2, directions, boutcore_operator, 
         boutcore.setOption("mxg", str(mxg), force=True)
         boutcore.setOption("myg", str(myg), force=True)
         # set up mesh input
-        if 'x' in directions:
+        if 'x' in dimensions:
             boutcore.setOption("testmesh:nx", exprToStr(n+2*mxg), force=True)
         else:
             boutcore.setOption("testmesh:nx", exprToStr(default_n+2*mxg), force=True)
-        if 'y' in directions:
+        if 'y' in dimensions:
             boutcore.setOption("testmesh:ny", exprToStr(n), force=True)
         else:
             boutcore.setOption("testmesh:ny", exprToStr(default_n), force=True)
-        if 'z' in directions:
+        if 'z' in dimensions:
             boutcore.setOption("testmesh:nz", exprToStr(n), force=True)
         else:
             boutcore.setOption("testmesh:nz", exprToStr(default_n), force=True)
@@ -181,7 +187,7 @@ def test_operator2(ngrids, testfunc1, testfunc2, directions, boutcore_operator, 
     logspacing = numpy.log(ngrids[-1]/ngrids[-2])
     convergence = logerrors/logspacing
 
-    if order-.1 < convergence < order+.1:
+    if order-.1 < convergence < order+.2:
         return ['pass']
     else:
         if plot_error:
@@ -192,18 +198,24 @@ def test_operator2(ngrids, testfunc1, testfunc2, directions, boutcore_operator, 
             showdata([error, bout_result.get()[mxg:-mxg, myg:-myg], analytic_result.get()[mxg:-mxg, myg:-myg]])
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+' '+str(method)+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
-def cycle_staggering2(stagger_directions, ngrids, testfunc1, testfunc2, directions, boutcore_operator, symbolic_operator, order, method=None):
-    staggers = [None, ('XLOW', 'XLOW'), ('YLOW', 'YLOW'), ('ZLOW', 'ZLOW')] # all derivatives at same inloc/outloc should work, but unfortunately interpolation means we'd have to refine the x-grid for XLOW/XLOW and y-grid for YLOW/YLOW so skip for now
-    #staggers = [None]
+def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, testfunc2, boutcore_operator, symbolic_operator, order, method=None):
+    # all derivatives at same inloc/outloc should work
+    dimensions_staggers = [(base_dimensions, None),
+                           (base_dimensions+'x', ('XLOW', 'XLOW')),
+                           (base_dimensions+'y', ('YLOW', 'YLOW')),
+                           (base_dimensions+'z', ('ZLOW', 'ZLOW'))]
     if 'x' in stagger_directions:
-        staggers += [('CENTRE', 'XLOW'), ('XLOW', 'CENTRE')]
+        dimensions_staggers += [(base_dimensions+'x', ('CENTRE', 'XLOW')),
+                                (base_dimensions+'x', ('XLOW', 'CENTRE'))]
     if 'y' in stagger_directions:
-        staggers += [('CENTRE', 'YLOW'), ('YLOW', 'CENTRE')]
+        dimensions_staggers += [(base_dimensions+'y', ('CENTRE', 'YLOW')),
+                                (base_dimensions+'y', ('YLOW', 'CENTRE'))]
     if 'z' in stagger_directions:
-        staggers += [('CENTRE', 'ZLOW'), ('ZLOW', 'CENTRE')]
+        dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW')),
+                                (base_dimensions+'z', ('ZLOW', 'CENTRE'))]
     result = []
-    for stagger in staggers:
-        result += test_operator2(ngrids, testfunc1, testfunc2, directions, boutcore_operator, symbolic_operator, order, stagger, method)
+    for dimensions, stagger in dimensions_staggers:
+        result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
     return result
 
 min_exponent = 4
@@ -219,41 +231,27 @@ order = 2
 plot_error = False
 
 boutcore.init("-q -q -q -q")
-#boutcore.init()
 
 results = []
 
-testlam = lambda v,f: Div_par(v*f)
-## single-argument operators
-#results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Grad_par, Grad_par, order)
-#results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Div_par, Div_par, order)
-#results += cycle_staggering('y', ngrids, testfunc, 'y', boutcore.Grad2_par2, Grad2_par2, order)
-#results += cycle_staggering('', numpy.array([32,64]), testfunc, 'xyz', boutcore.Laplace, Laplace, order, None) # Laplace is only implemented inloc=outloc
-## Delp2 uses the global mesh, which we can't reset, so can't test here
-##results += cycle_staggering('x', ngrids, testfunc, 'xz', boutcore.Delp2, Delp2, order)
-#
-## two-argument operators
-#results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'y', boutcore.Vpar_Grad_par, Vpar_Grad_par, order)
-#results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'y', boutcore.Div_par_flux, lambda v,f: Div_par(v*f), order=1)
-#results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xz', boutcore.bracket, bracket, order, None, method="BRACKET_ARAKAWA")
-#results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xyz', boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, None, method="BRACKET_STD")
-
 # single-argument operators
-results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Grad_par, Grad_par, order)
-results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Div_par, Div_par, order)
-results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Grad2_par2, Grad2_par2, order)
-results += cycle_staggering('', ngrids, testfunc, 'xyz', boutcore.Laplace, Laplace, order) # Laplace is only implemented inloc=outloc
-results += cycle_staggering('y', ngrids, testfunc, 'xyz', boutcore.Laplace_par, Laplace_par, order) # Laplace is only implemented inloc=outloc
-results += cycle_staggering('', ngrids, testfunc, 'xyz', boutcore.Laplace_perp, Laplace_perp, order) # Laplace is only implemented inloc=outloc
+results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Grad_par, Grad_par, order)
+results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Div_par, Div_par, order)
+results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Grad2_par2, Grad2_par2, order)
+results += cycle_staggering('', 'xyz', ngrids, testfunc, boutcore.Laplace, Laplace, order) # Laplace is only implemented inloc=outloc
+results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Laplace_par, Laplace_par, order) # Laplace is only implemented inloc=outloc
+# note Laplace_perp uses Laplace, so needs y-dimension refinement to converge
+results += cycle_staggering('', 'xyz', ngrids, testfunc, boutcore.Laplace_perp, Laplace_perp, order) # Laplace is only implemented inloc=outloc
 # Delp2 uses the global mesh, which we can't reset, so can't test here
-#results += cycle_staggering('x', ngrids, testfunc, 'xz', boutcore.Delp2, Delp2, order)
+#results += cycle_staggering('x', 'xz', ngrids, testfunc, boutcore.Delp2, Delp2, order)
 
 # two-argument operators
-results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'xyz', boutcore.Vpar_Grad_par, Vpar_Grad_par, order)
-results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'xyz', boutcore.Div_par_K_Grad_par, Div_par_K_Grad_par, order)
-results += cycle_staggering2('y', ngrids, testfunc, testfunc2, 'xyz', boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1)
-results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xyz', boutcore.bracket, bracket, order, method="BRACKET_ARAKAWA")
-results += cycle_staggering2('', ngrids, testfunc, testfunc2, 'xyz', boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, method="BRACKET_STD")
+results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Vpar_Grad_par, Vpar_Grad_par, order)
+results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_K_Grad_par, Div_par_K_Grad_par, order)
+results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1)
+results += cycle_staggering2('', 'xz', ngrids, testfunc, testfunc2, boutcore.bracket, bracket, order, method="BRACKET_ARAKAWA")
+# note BRACKET_STD version of bracket includes parallel derivatives, so needs y-dimension refinement to converge
+results += cycle_staggering2('', 'xyz', ngrids, testfunc, testfunc2, boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, method="BRACKET_STD")
 
 # check results of tests
 fail = False
