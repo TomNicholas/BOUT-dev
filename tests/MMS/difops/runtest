@@ -101,18 +101,34 @@ def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, bout
                            (base_dimensions+'x', ('XLOW', 'XLOW')),
                            (base_dimensions+'y', ('YLOW', 'YLOW')),
                            (base_dimensions+'z', ('ZLOW', 'ZLOW'))]
+    # all staggered->staggered difops should fail
+    fail_staggers = [('XLOW', 'YLOW'), ('XLOW', 'ZLOW'), ('YLOW', 'XLOW'), ('YLOW', 'ZLOW'), ('ZLOW', 'XLOW'), ('ZLOW', 'YLOW')]
     if 'x' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'x', ('CENTRE', 'XLOW')),
                                 (base_dimensions+'x', ('XLOW', 'CENTRE'))]
+    else:
+        fail_staggers += [('CENTRE', 'XLOW'), ('XLOW', 'CENTRE')]
     if 'y' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'y', ('CENTRE', 'YLOW')),
                                 (base_dimensions+'y', ('YLOW', 'CENTRE'))]
+    else:
+        fail_staggers += [('CENTRE', 'YLOW'), ('YLOW', 'CENTRE')]
     if 'z' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW')),
                                 (base_dimensions+'z', ('ZLOW', 'CENTRE'))]
+    else:
+        fail_staggers += [('CENTRE', 'ZLOW'), ('ZLOW', 'CENTRE')]
     result = []
     for dimensions, stagger in dimensions_staggers:
         result += test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger)
+    for stagger in fail_staggers:
+        # check that an exception is throw for combinations of directions that we expect to fail
+        try:
+            test = test_operator(numpy.array([4]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger)
+        except RuntimeError:
+            result += ['pass']
+        else:
+            result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+'->'+stagger[1]+' '+str(method)+' but it did not.']
     return result
 
 def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger):
@@ -204,19 +220,48 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
                            (base_dimensions+'x', ('XLOW', 'XLOW')),
                            (base_dimensions+'y', ('YLOW', 'YLOW')),
                            (base_dimensions+'z', ('ZLOW', 'ZLOW'))]
+    # all staggered->staggered difops should fail
+    fail_staggers = [('XLOW', 'YLOW'), ('XLOW', 'ZLOW'), ('YLOW', 'XLOW'), ('YLOW', 'ZLOW'), ('ZLOW', 'XLOW'), ('ZLOW', 'YLOW')]
     if 'x' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'x', ('CENTRE', 'XLOW')),
                                 (base_dimensions+'x', ('XLOW', 'CENTRE'))]
+    else:
+        fail_staggers += [('CENTRE', 'XLOW'), ('XLOW', 'CENTRE')]
     if 'y' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'y', ('CENTRE', 'YLOW')),
                                 (base_dimensions+'y', ('YLOW', 'CENTRE'))]
+    else:
+        fail_staggers += [('CENTRE', 'YLOW'), ('YLOW', 'CENTRE')]
     if 'z' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW')),
                                 (base_dimensions+'z', ('ZLOW', 'CENTRE'))]
+    else:
+        fail_staggers += [('CENTRE', 'ZLOW'), ('ZLOW', 'CENTRE')]
     result = []
     for dimensions, stagger in dimensions_staggers:
         result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
+    for stagger in fail_staggers:
+        # check that an exception is throw for combinations of directions that we expect to fail
+        try:
+            test = test_operator2(numpy.array([4]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
+        except RuntimeError:
+            result += ['pass']
+        else:
+            result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+'->'+stagger[1]+' '+str(method)+' but it did not.']
     return result
+
+# test if CHECK level is high enough for location comparison checks to be
+# active
+check_location_enabled = False
+try:
+    boutcore.setOption("testmesh:staggergrids", str('true'), force=True)
+    mesh = Mesh(section="testmesh")
+    test_field1 = boutcore.create3D(0.)
+    test_field1.setLocation('CENTRE')
+    test_field2 = boutcore.create3D(1.)
+    test_field2.setLocation('YLOW')
+except RuntimeError:
+    check_location_enabled = True
 
 min_exponent = 6
 max_exponent = 7
