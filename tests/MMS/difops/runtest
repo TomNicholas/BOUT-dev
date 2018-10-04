@@ -124,7 +124,7 @@ def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, bout
     for stagger in fail_staggers:
         # check that an exception is throw for combinations of directions that we expect to fail
         try:
-            test = test_operator(numpy.array([4]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger)
+            test = test_operator(numpy.array([4, 8]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger)
         except RuntimeError:
             result += ['pass']
         else:
@@ -243,7 +243,7 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
     for stagger in fail_staggers:
         # check that an exception is throw for combinations of directions that we expect to fail
         try:
-            test = test_operator2(numpy.array([4]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
+            test = test_operator2(numpy.array([4, 8]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
         except RuntimeError:
             result += ['pass']
         else:
