@@ -241,39 +241,71 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
                            (base_dimensions+'y', ('YLOW', 'YLOW', 'YLOW')),
                            (base_dimensions+'z', ('ZLOW', 'ZLOW', 'ZLOW'))]
     # all staggered->staggered difops should fail
-    fail_staggers = [('CENTRE', 'CENTRE', 'XLOW'), ('CENTRE', 'CENTRE', 'YLOW'), ('CENTRE', 'CENTRE', 'ZLOW'),
-                     ('CENTRE', 'XLOW', 'YLOW'), ('CENTRE', 'XLOW', 'ZLOW'), ('CENTRE', 'YLOW', 'XLOW'),
+    fail_staggers = [('CENTRE', 'XLOW', 'YLOW'), ('CENTRE', 'XLOW', 'ZLOW'), ('CENTRE', 'YLOW', 'XLOW'),
                      ('CENTRE', 'YLOW', 'ZLOW'), ('CENTRE', 'ZLOW', 'XLOW'), ('CENTRE', 'ZLOW', 'YLOW'),
-                     ('XLOW', 'CENTRE', 'XLOW'), ('XLOW', 'CENTRE', 'YLOW'), ('XLOW', 'CENTRE', 'ZLOW'),
-                     ('XLOW', 'XLOW', 'CENTRE'), ('XLOW', 'XLOW', 'YLOW'), ('XLOW', 'XLOW', 'ZLOW'),
-                     ('XLOW', 'YLOW', 'CENTRE'), ('XLOW', 'YLOW', 'XLOW'), ('XLOW', 'YLOW', 'YLOW'),
-                     ('XLOW', 'YLOW', 'ZLOW'), ('XLOW', 'ZLOW', 'CENTRE'), ('XLOW', 'ZLOW', 'XLOW'),
-                     ('XLOW', 'ZLOW', 'YLOW'), ('XLOW', 'ZLOW', 'ZLOW'),
-                     ('YLOW', 'CENTRE', 'XLOW'), ('YLOW', 'CENTRE', 'YLOW'), ('YLOW', 'CENTRE', 'ZLOW'),
-                     ('YLOW', 'XLOW', 'CENTRE'), ('YLOW', 'XLOW', 'XLOW'), ('YLOW', 'XLOW', 'YLOW'),
-                     ('YLOW', 'XLOW', 'ZLOW'), ('YLOW', 'YLOW', 'CENTRE'), ('YLOW', 'YLOW', 'XLOW'),
-                     ('YLOW', 'YLOW', 'ZLOW'), ('YLOW', 'ZLOW', 'CENTRE'), ('YLOW', 'ZLOW', 'XLOW'),
-                     ('YLOW', 'ZLOW', 'YLOW'), ('YLOW', 'ZLOW', 'ZLOW'),
-                     ('ZLOW', 'CENTRE', 'XLOW'), ('ZLOW', 'CENTRE', 'YLOW'), ('ZLOW', 'CENTRE', 'ZLOW'),
-                     ('ZLOW', 'XLOW', 'CENTRE'), ('ZLOW', 'XLOW', 'XLOW'), ('ZLOW', 'XLOW', 'YLOW'),
-                     ('ZLOW', 'XLOW', 'ZLOW'), ('ZLOW', 'YLOW', 'CENTRE'), ('ZLOW', 'YLOW', 'XLOW'),
-                     ('ZLOW', 'YLOW', 'YLOW'), ('ZLOW', 'YLOW', 'ZLOW'), ('ZLOW', 'ZLOW', 'CENTRE'),
-                     ('ZLOW', 'ZLOW', 'XLOW'), ('ZLOW', 'ZLOW', 'YLOW')]
-    if 'x' in stagger_directions:
+                     ('XLOW', 'CENTRE', 'YLOW'), ('XLOW', 'CENTRE', 'ZLOW'), ('XLOW', 'XLOW', 'YLOW'),
+                     ('XLOW', 'XLOW', 'ZLOW'), ('XLOW', 'YLOW', 'CENTRE'), ('XLOW', 'YLOW', 'XLOW'),
+                     ('XLOW', 'YLOW', 'YLOW'), ('XLOW', 'YLOW', 'ZLOW'), ('XLOW', 'ZLOW', 'CENTRE'),
+                     ('XLOW', 'ZLOW', 'XLOW'), ('XLOW', 'ZLOW', 'YLOW'), ('XLOW', 'ZLOW', 'ZLOW'),
+                     ('YLOW', 'CENTRE', 'XLOW'), ('YLOW', 'CENTRE', 'ZLOW'), ('YLOW', 'XLOW', 'CENTRE'),
+                     ('YLOW', 'XLOW', 'XLOW'), ('YLOW', 'XLOW', 'YLOW'), ('YLOW', 'XLOW', 'ZLOW'),
+                     ('YLOW', 'YLOW', 'XLOW'), ('YLOW', 'YLOW', 'ZLOW'), ('YLOW', 'ZLOW', 'CENTRE'),
+                     ('YLOW', 'ZLOW', 'XLOW'), ('YLOW', 'ZLOW', 'YLOW'), ('YLOW', 'ZLOW', 'ZLOW'),
+                     ('ZLOW', 'CENTRE', 'XLOW'), ('ZLOW', 'CENTRE', 'YLOW'), ('ZLOW', 'XLOW', 'CENTRE'),
+                     ('ZLOW', 'XLOW', 'XLOW'), ('ZLOW', 'XLOW', 'YLOW'), ('ZLOW', 'XLOW', 'ZLOW'),
+                     ('ZLOW', 'YLOW', 'CENTRE'), ('ZLOW', 'YLOW', 'XLOW'), ('ZLOW', 'YLOW', 'YLOW'),
+                     ('ZLOW', 'YLOW', 'ZLOW'), ('ZLOW', 'ZLOW', 'XLOW'), ('ZLOW', 'ZLOW', 'YLOW')]
+    if 'xx' in stagger_directions:
+        # for xx include all permutations of XLOW and CENTRE
+        dimensions_staggers += [(base_dimensions+'x', ('CENTRE', 'CENTRE', 'XLOW')),
+                                (base_dimensions+'x', ('CENTRE', 'XLOW', 'CENTRE')),
+                                (base_dimensions+'x', ('XLOW', 'CENTRE', 'CENTRE')),
+                                (base_dimensions+'x', ('XLOW', 'XLOW', 'CENTRE')),
+                                (base_dimensions+'x', ('XLOW', 'CENTRE', 'XLOW')),
+                                (base_dimensions+'x', ('CENTRE', 'XLOW', 'XLOW'))]
+    elif 'x' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'x', ('CENTRE', 'XLOW', 'XLOW')),
                                 (base_dimensions+'x', ('XLOW', 'CENTRE', 'CENTRE'))]
+        fail_staggers += [('CENTRE', 'CENTRE', 'XLOW'), ('CENTRE', 'XLOW', 'CENTRE'),
+                          ('XLOW', 'XLOW', 'CENTRE'), ('XLOW', 'CENTRE', 'XLOW')]
     else:
-        fail_staggers += [('CENTRE', 'XLOW', 'XLOW'), ('XLOW', 'CENTRE', 'CENTRE')]
-    if 'y' in stagger_directions:
+        fail_staggers += [('CENTRE', 'XLOW', 'XLOW'), ('XLOW', 'CENTRE', 'CENTRE'),
+                          ('CENTRE', 'CENTRE', 'XLOW'), ('CENTRE', 'XLOW', 'CENTRE'),
+                          ('XLOW', 'XLOW', 'CENTRE'), ('XLOW', 'CENTRE', 'XLOW')]
+    if 'yy' in stagger_directions:
+        # for yy include all permutations of YLOW and CENTRE
+        dimensions_staggers += [(base_dimensions+'y', ('CENTRE', 'CENTRE', 'YLOW')),
+                                (base_dimensions+'y', ('CENTRE', 'YLOW', 'CENTRE')),
+                                (base_dimensions+'y', ('YLOW', 'CENTRE', 'CENTRE')),
+                                (base_dimensions+'y', ('YLOW', 'YLOW', 'CENTRE')),
+                                (base_dimensions+'y', ('YLOW', 'CENTRE', 'YLOW')),
+                                (base_dimensions+'y', ('CENTRE', 'YLOW', 'YLOW'))]
+    elif 'y' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'y', ('CENTRE', 'YLOW', 'YLOW')),
                                 (base_dimensions+'y', ('YLOW', 'CENTRE', 'CENTRE'))]
+        fail_staggers += [('CENTRE', 'CENTRE', 'YLOW'), ('CENTRE', 'YLOW', 'CENTRE'),
+                          ('YLOW', 'YLOW', 'CENTRE'), ('YLOW', 'CENTRE', 'YLOW')]
     else:
-        fail_staggers += [('CENTRE', 'YLOW', 'YLOW'), ('YLOW', 'CENTRE', 'CENTRE')]
-    if 'z' in stagger_directions:
+        fail_staggers += [('CENTRE', 'YLOW', 'YLOW'), ('YLOW', 'CENTRE', 'CENTRE'),
+                          ('CENTRE', 'CENTRE', 'YLOW'), ('CENTRE', 'YLOW', 'CENTRE'),
+                          ('YLOW', 'YLOW', 'CENTRE'), ('YLOW', 'CENTRE', 'YLOW')]
+    if 'zz' in stagger_directions:
+        # for zz include all permutations of ZLOW and CENTRE
+        dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'CENTRE', 'ZLOW')),
+                                (base_dimensions+'z', ('CENTRE', 'ZLOW', 'CENTRE')),
+                                (base_dimensions+'z', ('ZLOW', 'CENTRE', 'CENTRE')),
+                                (base_dimensions+'z', ('ZLOW', 'ZLOW', 'CENTRE')),
+                                (base_dimensions+'z', ('ZLOW', 'CENTRE', 'ZLOW')),
+                                (base_dimensions+'z', ('CENTRE', 'ZLOW', 'ZLOW'))]
+    elif 'z' in stagger_directions:
         dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW', 'ZLOW')),
                                 (base_dimensions+'z', ('ZLOW', 'CENTRE', 'CENTRE'))]
+        fail_staggers += [('CENTRE', 'CENTRE', 'ZLOW'), ('CENTRE', 'ZLOW', 'CENTRE'),
+                          ('ZLOW', 'ZLOW', 'CENTRE'), ('ZLOW', 'CENTRE', 'ZLOW')]
     else:
-        fail_staggers += [('CENTRE', 'ZLOW', 'ZLOW'), ('ZLOW', 'CENTRE', 'CENTRE')]
+        fail_staggers += [('CENTRE', 'ZLOW', 'ZLOW'), ('ZLOW', 'CENTRE', 'CENTRE'),
+                          ('CENTRE', 'CENTRE', 'ZLOW'), ('CENTRE', 'ZLOW', 'CENTRE'),
+                          ('ZLOW', 'ZLOW', 'CENTRE'), ('ZLOW', 'CENTRE', 'ZLOW')]
     result = []
     for dimensions, stagger in dimensions_staggers:
         result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
@@ -335,7 +367,7 @@ results += cycle_staggering('', 'xyz', ngrids, testfunc, boutcore.Laplace_perp, 
 
 # two-argument operators
 results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Vpar_Grad_par, Vpar_Grad_par, order)
-results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_K_Grad_par, Div_par_K_Grad_par, order)
+results += cycle_staggering2('yy', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_K_Grad_par, Div_par_K_Grad_par, order)
 results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1)
 results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), order, method='C2')
 results += cycle_staggering2('', 'xz', ngrids, testfunc, testfunc2, boutcore.bracket, bracket, order, method='BRACKET_ARAKAWA')
