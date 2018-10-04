@@ -170,19 +170,21 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
         boutcore.setOption("testmesh:g_23", exprToStr(metric.g_23), force=True)
         if stagger is None:
             boutcore.setOption("testmesh:staggergrids", str('false'), force=True)
+            vloc = 'CENTRE'
             inloc = 'CENTRE'
             outloc = 'CENTRE'
         else:
             boutcore.setOption("testmesh:staggergrids", str('true'), force=True)
-            inloc = stagger[0]
-            outloc = stagger[1]
+            vloc = stagger[0]
+            inloc = stagger[1]
+            outloc = stagger[2]
 
         # create new Mesh object
         mesh = boutcore.Mesh(section="testmesh")
 
         # calculate result of differential operator using BOUT++ implementation
-        bout_input1 = boutcore.create3D(testfunc1, mesh, outloc=inloc)
-        bout_input2 = boutcore.create3D(testfunc2, mesh, outloc=outloc)
+        bout_input1 = boutcore.create3D(testfunc1, mesh, outloc=vloc)
+        bout_input2 = boutcore.create3D(testfunc2, mesh, outloc=inloc)
         if method is None:
             bout_result = boutcore_operator(bout_input1, bout_input2, outloc=outloc)
         else:
@@ -217,26 +219,43 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
 def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, testfunc2, boutcore_operator, symbolic_operator, order, method=None):
     # all derivatives at same inloc/outloc should work
     dimensions_staggers = [(base_dimensions, None),
-                           (base_dimensions+'x', ('XLOW', 'XLOW')),
-                           (base_dimensions+'y', ('YLOW', 'YLOW')),
-                           (base_dimensions+'z', ('ZLOW', 'ZLOW'))]
+                           (base_dimensions+'x', ('XLOW', 'XLOW', 'XLOW')),
+                           (base_dimensions+'y', ('YLOW', 'YLOW', 'YLOW')),
+                           (base_dimensions+'z', ('ZLOW', 'ZLOW', 'ZLOW'))]
     # all staggered->staggered difops should fail
-    fail_staggers = [('XLOW', 'YLOW'), ('XLOW', 'ZLOW'), ('YLOW', 'XLOW'), ('YLOW', 'ZLOW'), ('ZLOW', 'XLOW'), ('ZLOW', 'YLOW')]
+    fail_staggers = [('CENTRE', 'CENTRE', 'XLOW'), ('CENTRE', 'CENTRE', 'YLOW'), ('CENTRE', 'CENTRE', 'ZLOW'),
+                     ('CENTRE', 'XLOW', 'YLOW'), ('CENTRE', 'XLOW', 'ZLOW'), ('CENTRE', 'YLOW', 'XLOW'),
+                     ('CENTRE', 'YLOW', 'ZLOW'), ('CENTRE', 'ZLOW', 'XLOW'), ('CENTRE', 'ZLOW', 'YLOW'),
+                     ('XLOW', 'CENTRE', 'XLOW'), ('XLOW', 'CENTRE', 'YLOW'), ('XLOW', 'CENTRE', 'ZLOW'),
+                     ('XLOW', 'XLOW', 'CENTRE'), ('XLOW', 'XLOW', 'YLOW'), ('XLOW', 'XLOW', 'ZLOW'),
+                     ('XLOW', 'YLOW', 'CENTRE'), ('XLOW', 'YLOW', 'XLOW'), ('XLOW', 'YLOW', 'YLOW'),
+                     ('XLOW', 'YLOW', 'ZLOW'), ('XLOW', 'ZLOW', 'CENTRE'), ('XLOW', 'ZLOW', 'XLOW'),
+                     ('XLOW', 'ZLOW', 'YLOW'), ('XLOW', 'ZLOW', 'ZLOW'),
+                     ('YLOW', 'CENTRE', 'XLOW'), ('YLOW', 'CENTRE', 'YLOW'), ('YLOW', 'CENTRE', 'ZLOW'),
+                     ('YLOW', 'XLOW', 'CENTRE'), ('YLOW', 'XLOW', 'XLOW'), ('YLOW', 'XLOW', 'YLOW'),
+                     ('YLOW', 'XLOW', 'ZLOW'), ('YLOW', 'YLOW', 'CENTRE'), ('YLOW', 'YLOW', 'XLOW'),
+                     ('YLOW', 'YLOW', 'ZLOW'), ('YLOW', 'ZLOW', 'CENTRE'), ('YLOW', 'ZLOW', 'XLOW'),
+                     ('YLOW', 'ZLOW', 'YLOW'), ('YLOW', 'ZLOW', 'ZLOW'),
+                     ('ZLOW', 'CENTRE', 'XLOW'), ('ZLOW', 'CENTRE', 'YLOW'), ('ZLOW', 'CENTRE', 'ZLOW'),
+                     ('ZLOW', 'XLOW', 'CENTRE'), ('ZLOW', 'XLOW', 'XLOW'), ('ZLOW', 'XLOW', 'YLOW'),
+                     ('ZLOW', 'XLOW', 'ZLOW'), ('ZLOW', 'YLOW', 'CENTRE'), ('ZLOW', 'YLOW', 'XLOW'),
+                     ('ZLOW', 'YLOW', 'YLOW'), ('ZLOW', 'YLOW', 'ZLOW'), ('ZLOW', 'ZLOW', 'CENTRE'),
+                     ('ZLOW', 'ZLOW', 'XLOW'), ('ZLOW', 'ZLOW', 'YLOW')]
     if 'x' in stagger_directions:
-        dimensions_staggers += [(base_dimensions+'x', ('CENTRE', 'XLOW')),
-                                (base_dimensions+'x', ('XLOW', 'CENTRE'))]
+        dimensions_staggers += [(base_dimensions+'x', ('CENTRE', 'XLOW', 'XLOW')),
+                                (base_dimensions+'x', ('XLOW', 'CENTRE', 'CENTRE'))]
     else:
-        fail_staggers += [('CENTRE', 'XLOW'), ('XLOW', 'CENTRE')]
+        fail_staggers += [('CENTRE', 'XLOW', 'XLOW'), ('XLOW', 'CENTRE', 'CENTRE')]
     if 'y' in stagger_directions:
-        dimensions_staggers += [(base_dimensions+'y', ('CENTRE', 'YLOW')),
-                                (base_dimensions+'y', ('YLOW', 'CENTRE'))]
+        dimensions_staggers += [(base_dimensions+'y', ('CENTRE', 'YLOW', 'YLOW')),
+                                (base_dimensions+'y', ('YLOW', 'CENTRE', 'CENTRE'))]
     else:
-        fail_staggers += [('CENTRE', 'YLOW'), ('YLOW', 'CENTRE')]
+        fail_staggers += [('CENTRE', 'YLOW', 'YLOW'), ('YLOW', 'CENTRE', 'CENTRE')]
     if 'z' in stagger_directions:
-        dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW')),
-                                (base_dimensions+'z', ('ZLOW', 'CENTRE'))]
+        dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW', 'ZLOW')),
+                                (base_dimensions+'z', ('ZLOW', 'CENTRE', 'CENTRE'))]
     else:
-        fail_staggers += [('CENTRE', 'ZLOW'), ('ZLOW', 'CENTRE')]
+        fail_staggers += [('CENTRE', 'ZLOW', 'ZLOW'), ('ZLOW', 'CENTRE', 'CENTRE')]
     result = []
     for dimensions, stagger in dimensions_staggers:
         result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
@@ -247,7 +266,7 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
         except RuntimeError:
             result += ['pass']
         else:
-            result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+'->'+stagger[1]+' '+str(method)+' but it did not.']
+            result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+','+stagger[1]+'->'+stagger[2]+' '+str(method)+' but it did not.']
     return result
 
 # test if CHECK level is high enough for location comparison checks to be
