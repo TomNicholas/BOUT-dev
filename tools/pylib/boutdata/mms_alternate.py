@@ -161,6 +161,10 @@ def Vpar_Grad_par(v, f):
     """Parallel advection operator v*grad_||(f)"""
     return v * Grad_par(f)
 
+def Div_par_K_Grad_par(K, f):
+    """Parallel diffusion operator Div(b K b.Grad(f))"""
+    return Div_par(K*Grad_par(f))
+
 def Div_par(f):
     '''
     Divergence of magnetic field aligned vector v = \bhat f
