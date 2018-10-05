@@ -256,9 +256,9 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
         if ftypes[0] == '2D':
             # cannot have z-dependence
             testfunc1.replace('z', '0')
-            bout_input1 = boutcore.create2D(testfunc1, mesh, outloc=inloc)
+            bout_input1 = boutcore.create2D(testfunc1, mesh, outloc=vloc)
         elif ftypes[0] == '3D':
-            bout_input1 = boutcore.create3D(testfunc1, mesh, outloc=inloc)
+            bout_input1 = boutcore.create3D(testfunc1, mesh, outloc=vloc)
         else:
             raise ValueError('Unexpected ftype argument '+str(ftypes[0]))
         if ftypes[1] == '2D':
