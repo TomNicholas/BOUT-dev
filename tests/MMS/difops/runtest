@@ -168,7 +168,7 @@ def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, bout
 def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, ftypes, method, stagger, mesh_in=None):
 
     error_list = []
-    print('testing',boutcore_operator, stagger)
+    print('testing', boutcore_operator, ftypes, stagger)
     for n in ngrids:
         print('n =',n)
         if mesh_in is not None:
@@ -223,22 +223,22 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
             outloc = stagger[2]
 
         # calculate result of differential operator using BOUT++ implementation
-        if ftype[0] == '2D':
+        if ftypes[0] == '2D':
             # cannot have z-dependence
             testfunc1.replace('z', '0')
             bout_input1 = boutcore.create2D(testfunc1, mesh, outloc=inloc)
-        elif ftype[0] == '3D':
+        elif ftypes[0] == '3D':
             bout_input1 = boutcore.create3D(testfunc1, mesh, outloc=inloc)
         else:
-            raise ValueError('Unexpected ftype argument '+str(ftype[0]))
-        if ftype[1] == '2D':
+            raise ValueError('Unexpected ftype argument '+str(ftypes[0]))
+        if ftypes[1] == '2D':
             # cannot have z-dependence
             testfunc2.replace('z', '0')
             bout_input2 = boutcore.create2D(testfunc2, mesh, outloc=inloc)
-        elif ftype[1] == '3D':
+        elif ftypes[1] == '3D':
             bout_input2 = boutcore.create3D(testfunc2, mesh, outloc=inloc)
         else:
-            raise ValueError('Unexpected ftype argument '+str(ftype[1]))
+            raise ValueError('Unexpected ftype argument '+str(ftypes[1]))
         if method is None:
             bout_result = boutcore_operator(bout_input1, bout_input2, outloc=outloc)
         else:
@@ -248,14 +248,14 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
         analytic_input1 = sympy.sympify(testfunc1)
         analytic_input2 = sympy.sympify(testfunc2)
         analytic_func = symbolic_operator(analytic_input1, analytic_input2)
-        if ftype[0] == '2D' and ftype[1] == '2D':
+        if ftypes[0] == '2D' and ftypes[1] == '2D':
             analytic_result = boutcore.create2D(exprToStr(analytic_func), mesh, outloc=outloc)
         else:
             analytic_result = boutcore.create3D(exprToStr(analytic_func), mesh, outloc=outloc)
 
         # calculate max error
         error = bout_result - analytic_result # as Field3D
-        error = error.get()[mxg:-mxg, myg:-myg, :] # numpy array, without guard cells
+        error = error.get()[mxg:-mxg, myg:-myg] # numpy array, without guard cells
         error_list.append(numpy.max(numpy.abs(error))) # max error
 
     logerrors = numpy.log(error_list[-2]/error_list[-1])
