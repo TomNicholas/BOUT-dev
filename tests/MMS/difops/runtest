@@ -118,6 +118,36 @@ def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_oper
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
 def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, boutcore_operator, symbolic_operator, order, types):
+    """
+    Loop over different parameters, calling test_operator for each
+
+    Parameters
+    ----------
+
+    stagger_directions : str
+        Directions in which this operator can be staggered. String containing
+        'x', 'y' or 'z' will test both permutations of staggering between
+        CENTRE and the corresponding direction.
+    base_dimensions : str
+        String containing any of 'x', 'y' and 'z': the grid must be refined in
+        the directions contained in this argument in order to converge. E.g.
+        Grad_par requires refinement only in the y-direction.
+    ngrids : numpy.array(int)
+        Array of grid sizes to use. All directions being refined are given the
+        same size.
+    testfunc : sympy expression
+        The input that will be given to the function being tested
+    boutcore_operator : function
+        function from boutcore to be tested
+    symbolic_operator : function
+        function using sympy to do the symbolic equivalent of boutcore_operator
+    order : int
+        expected order of convergence of boutcore_operator
+    types : list of str
+        list of strings giving the type of the argument to the operators
+        respectively. '2D' for Field2D and '3D' for Field3D.
+    """
+
     # all derivatives at same inloc/outloc should work
     dimensions_staggers = [(base_dimensions, None), # no staggering
                            (base_dimensions+'x', ('CENTRE', 'CENTRE')), # include all-centred, but with StaggerGrids=true
@@ -274,6 +304,42 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+' '+str(method)+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
 def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, testfunc2, boutcore_operator, symbolic_operator, order, types, method=None):
+    """
+    Loop over different parameters, calling test_operator2 for each
+
+    Parameters
+    ----------
+
+    stagger_directions : str
+        Directions in which this operator can be staggered. String containing
+        'xx', 'yy' or 'zz' will test all permutations of staggering between
+        CENTRE and the corresponding direction. String containing 'x', 'y' or
+        'z' will keep second argument and outloc at the same location, and
+        stagger the first argument in the corresponding direction.
+    base_dimensions : str
+        String containing any of 'x', 'y' and 'z': the grid must be refined in
+        the directions contained in this argument in order to converge. E.g.
+        Grad_par requires refinement only in the y-direction.
+    ngrids : numpy.array(int)
+        Array of grid sizes to use. All directions being refined are given the
+        same size.
+    testfunc1, testfunc2 : sympy expression
+        The inputs that will be given to the function being tested
+    boutcore_operator : function
+        function from boutcore to be tested
+    symbolic_operator : function
+        function using sympy to do the symbolic equivalent of boutcore_operator
+    order : int
+        expected order of convergence of boutcore_operator
+    types : list of tuples of str
+        list of pairs (type1, type2) giving the type of first and second
+        arguments to the operators respectively. '2D' for Field2D and '3D' for
+        Field3D.
+    method : str
+        DIFF_METHOD to pass to boutcore_operator. If method=None then method
+        argument will not be passed, so the default will be used.
+    """
+
     # all derivatives at same inloc/outloc should work
     dimensions_staggers = [(base_dimensions, None), # no staggering
                            (base_dimensions+'x', ('CENTRE', 'CENTRE', 'CENTRE')), # include all-centred, but with StaggerGrids=true
