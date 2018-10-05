@@ -120,7 +120,7 @@ def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_oper
             pyplot.show()
             from boututils.showdata import showdata
             showdata(error)
-        return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+'. Expected '+str(order)+', got '+str(convergence)+'.']
+        return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+' '+str(ftype)+' '+str(method)+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
 def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, boutcore_operator, symbolic_operator, order, types, method=None):
     """
