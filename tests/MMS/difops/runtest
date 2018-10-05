@@ -12,6 +12,7 @@ from boutdata.mms_alternate import *
 
 import numpy
 import sympy
+from copy import copy
 from sys import exit
 
 # geometry for simple circular tokamak
@@ -23,6 +24,7 @@ tokamak.set_scaley(1 + .1*sin(2*pi*metric.x-metric.y))
 
 def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, method, stagger, mesh_in=None):
 
+    testfunc = copy(testfunc) # ensure we don't change global testfunc
     error_list = []
     print('testing',boutcore_operator, ftype, stagger)
     for n in ngrids:
@@ -200,6 +202,8 @@ def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, bout
 
 def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, ftypes, method, stagger, mesh_in=None):
 
+    testfunc1 = copy(testfunc1) # ensure we don't change global testfunc1
+    testfunc2 = copy(testfunc2) # ensure we don't change global testfunc2
     error_list = []
     print('testing', boutcore_operator, ftypes, stagger)
     for n in ngrids:
@@ -434,7 +438,6 @@ default_n = 4
 mxg = 2
 myg = 2
 testfunc = 'cos(2*pi*x+y+z)'
-testfunc = 'cos(y+x)'
 testfunc2 = 'sin(4*pi*x+2*y+2*z)+cos(2*pi*x-z)'
 order = 2
 plot_error = False
