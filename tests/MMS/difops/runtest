@@ -505,14 +505,15 @@ if test_deriv_ops:
     results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.VDDY, lambda v,f: v*DDY(f), order, types_3d)
     results += cycle_staggering2('', 'y', ngrids, testfunc, testfunc2, boutcore.VDDY, lambda v,f: v*DDY(f), order, types_2d)
     results += cycle_staggering2('', 'z', ngrids, testfunc, testfunc2, boutcore.VDDZ, lambda v,f: v*DDZ(f), order, types_3d, method='C2')
-    results += cycle_staggering2('x', 'x', ngrids, testfunc, testfunc2, boutcore.FDDX, lambda v,f: DDX(v*f), order, types_3d)
-    results += cycle_staggering2('x', '', ngrids, testfunc, testfunc2, boutcore.FDDX, lambda v,f: DDX(v*f), order, types_2d)
-    results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.FDDY, lambda v,f: DDY(v*f), order, types_3d)
-    results += cycle_staggering2('y', '', ngrids, testfunc, testfunc2, boutcore.FDDY, lambda v,f: DDY(v*f), order, types_2d)
-    results += cycle_staggering2('', 'z', ngrids, testfunc, testfunc2, boutcore.FDDZ, lambda v,f: DDZ(v*f), order, types_3d, method='C2')
-    results += cycle_staggering('', 'xy', ngrids, testfunc, boutcore.D2DXDY, D2DXDY, order, all_types)
-    results += cycle_staggering('', 'xz', ngrids, testfunc, boutcore.D2DXDZ, D2DXDZ, order, all_types)
-    results += cycle_staggering('', 'yz', ngrids, testfunc, boutcore.D2DYDZ, D2DYDZ, order, all_types)
+    results += cycle_staggering2('x', 'x', ngrids, testfunc, testfunc2, boutcore.FDDX, lambda v,f: DDX(v*f), 1, types_3d)
+    results += cycle_staggering2('', 'x', ngrids, testfunc, testfunc2, boutcore.FDDX, lambda v,f: DDX(v*f), 1, types_2d)
+    results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.FDDY, lambda v,f: DDY(v*f), 1, types_3d)
+    results += cycle_staggering2('', 'y', ngrids, testfunc, testfunc2, boutcore.FDDY, lambda v,f: DDY(v*f), 1, types_2d)
+    results += cycle_staggering2('z', 'z', ngrids, testfunc, testfunc2, boutcore.FDDZ, lambda v,f: DDZ(v*f), 1, types_3d)
+    results += cycle_staggering('y', 'xy', ngrids, testfunc, boutcore.D2DXDY, D2DXDY, order, type_3d)
+    results += cycle_staggering('', 'xy', ngrids, testfunc, boutcore.D2DXDY, D2DXDY, order, type_2d)
+    results += cycle_staggering('', 'xz', ngrids, testfunc, boutcore.D2DXDZ, D2DXDZ, order, type_3d)
+    results += cycle_staggering('', 'yz', ngrids, testfunc, boutcore.D2DYDZ, D2DYDZ, order, type_3d)
 
 # check results of tests
 fail = False
