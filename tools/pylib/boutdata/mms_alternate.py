@@ -42,6 +42,11 @@ class Metric(object):
         self.J = 1.0
         self.B = 1.0
 
+        # coordinate transformations for 'mesh refinement'
+        # expressions for these must average to 1.
+        self.scalex = 1.0
+        self.scaley = 1.0
+
 metric = Metric()
 
 # Basic differencing
@@ -52,20 +57,20 @@ def ddt(f):
 
 def DDX(f):
     # psiwidth = dx/dx_in
-    return diff(f, metric.x)/metric.psiwidth
+    return diff(f, metric.x)/metric.psiwidth/metric.scalex
 
 def DDY(f):
-    return diff(f, metric.y)
+    return diff(f, metric.y)/metric.scaley
 
 def DDZ(f):
     return diff(f, metric.z)*metric.zperiod
 
 
 def D2DX2(f):
-    return diff(f, metric.x, 2)/metric.psiwidth**2
+    return diff(f, metric.x, 2)/metric.psiwidth**2/metric.scalex**2
 
 def D2DY2(f):
-    return diff(f, metric.y, 2)
+    return diff(f, metric.y, 2)/metric.scaley**2
 
 def D2DZ2(f):
     return diff(f, metric.z, 2)*metric.zperiod**2
@@ -326,8 +331,8 @@ class BaseTokamak(object):
         output.write("nx", ngx)
         output.write("ny", ngy)
 
-        dx = self.psiwidth / nx  + 0.*self.x
-        dy = 2.*pi / ny + 0.*self.x
+        dx = self.psiwidth * metric.scalex / nx  + 0.*self.x
+        dy = 2.*pi * metric.scaley / ny + 0.*self.x
 
         for name, var in [ ("dx", dx),
                            ("dy", dy),
@@ -450,8 +455,8 @@ class BaseTokamak(object):
         if not self.metric_is_set:
             raise ValueError("Error: metric has not been calculated yet, so cannot print")
 
-        print("dx = "+exprToStr(metric.psiwidth)+"/(nx-2*mxg)")
-        print("dy = 2.*pi/ny")
+        print("dx = "+exprToStr(metric.psiwidth*metric.scalex)+"/(nx-2*mxg)")
+        print("dy = 2.*pi*"+exprToStr(metric.scaley)+"/ny")
         print("dz = 2.*pi/nz/"+exprToStr(metric.zperiod))
         print("g11 = "+exprToStr(metric.g11))
         print("g22 = "+exprToStr(metric.g22))
@@ -491,6 +496,22 @@ class BaseTokamak(object):
 
         print("Lx = "+exprToStr(metric.psiwidth))
         print("Lz = "+exprToStr((2.*pi*self.R/metric.zperiod).evalf()))
+
+    def set_scalex(self, expr):
+        # check average of expr is 1.
+        average = integrate(expr, (x, 0, 1), (y, 0, 2*pi))/2/pi
+        if not average == 1:
+            raise ValueError("scalex must average to 1")
+        else:
+            metric.scalex = expr
+
+    def set_scaley(self, expr):
+        # check average of expr is 1.
+        average = integrate(expr, (x, 0, 1), (y, 0, 2*pi))/2/pi
+        if not average == 1:
+            raise ValueError("scaley must average to 1")
+        else:
+            metric.scaley = expr
 
 ##################################
 
