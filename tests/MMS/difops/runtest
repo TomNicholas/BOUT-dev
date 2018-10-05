@@ -17,10 +17,10 @@ from sys import exit
 # geometry for simple circular tokamak
 tokamak = SimpleTokamak()
 
-def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger, mesh_in=None):
+def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, stagger, mesh_in=None):
 
     error_list = []
-    print('testing',boutcore_operator, stagger)
+    print('testing',boutcore_operator, ftype, stagger)
     for n in ngrids:
         print('n =',n)
         if mesh_in is not None:
@@ -73,17 +73,29 @@ def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_oper
             outloc = stagger[1]
 
         # calculate result of differential operator using BOUT++ implementation
-        bout_input = boutcore.create3D(testfunc, mesh, outloc=inloc)
+        if ftype == '2D':
+            # cannot have z-dependence
+            testfunc.replace('z', '0')
+            bout_input = boutcore.create2D(testfunc, mesh, outloc=inloc)
+        elif ftype == '3D':
+            bout_input = boutcore.create3D(testfunc, mesh, outloc=inloc)
+        else:
+            raise ValueError('Unexpected ftype argument '+str(ftype))
         bout_result = boutcore_operator(bout_input, outloc=outloc)
 
-        # calculate result of differential operator symbolically, then convert to boutcore.Field3D
+        # calculate result of differential operator symbolically, then convert to boutcore.Field3D/Field2D
         analytic_input = sympy.sympify(testfunc)
         analytic_func = symbolic_operator(analytic_input)
-        analytic_result = boutcore.create3D(exprToStr(analytic_func), mesh, outloc=outloc)
+        if ftype == '2D':
+            analytic_result = boutcore.create2D(exprToStr(analytic_func), mesh, outloc=outloc)
+        elif ftype == '3D':
+            analytic_result = boutcore.create3D(exprToStr(analytic_func), mesh, outloc=outloc)
+        else:
+            raise ValueError('Unexpected ftype argument '+str(ftype))
 
         # calculate max error
-        error = bout_result - analytic_result # as Field3D
-        error = error.get()[mxg:-mxg, myg:-myg, :] # numpy array, without guard cells
+        error = bout_result - analytic_result # as Field3D/Field2D
+        error = error.get()[mxg:-mxg, myg:-myg] # numpy array, without guard cells
         error_list.append(numpy.max(numpy.abs(error))) # max error
 
     logerrors = numpy.log(error_list[-2]/error_list[-1])
@@ -101,7 +113,7 @@ def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_oper
             showdata(error)
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
-def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, boutcore_operator, symbolic_operator, order):
+def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, boutcore_operator, symbolic_operator, order, types):
     # all derivatives at same inloc/outloc should work
     dimensions_staggers = [(base_dimensions, None), # no staggering
                            (base_dimensions+'x', ('CENTRE', 'CENTRE')), # include all-centred, but with StaggerGrids=true
@@ -118,37 +130,38 @@ def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, bout
         dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW')),
                                 (base_dimensions+'z', ('ZLOW', 'CENTRE'))]
     result = []
-    for dimensions, stagger in dimensions_staggers:
-        result += test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger)
-
-    if test_throw:
-        # check that unsupported combinations of locations throw an exception
-
-        locations = ['CENTRE', 'XLOW', 'YLOW', 'ZLOW']
-        # first make a list of all permutations
-        fail_staggers = [(x,y) for x in locations for y in locations]
-        # now remove the ones have already tested
+    for ftype in types:
         for dimensions, stagger in dimensions_staggers:
-            if stagger is not None:
-                index = fail_staggers.index(stagger)
-                del fail_staggers[index]
-        boutcore.setOption('failmesh:nx', '8', force=True)
-        boutcore.setOption('failmesh:ny', '4', force=True)
-        boutcore.setOption('failmesh:nz', '4', force=True)
-        boutcore.setOption('failmesh:staggergrids', 'true', force=True)
-        failmesh = boutcore.Mesh(section='failmesh')
-        for stagger in fail_staggers:
-            # check that an exception is throw for combinations of directions that we expect to fail
-            try:
-                test = test_operator(numpy.array([4, 8]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger, mesh_in=failmesh)
-            except RuntimeError:
-                result += ['pass']
-            else:
-                result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+'->'+stagger[1]+' '+str(method)+' but it did not.']
+            result += test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, stagger)
+
+        if test_throw:
+            # check that unsupported combinations of locations throw an exception
+
+            locations = ['CENTRE', 'XLOW', 'YLOW', 'ZLOW']
+            # first make a list of all permutations
+            fail_staggers = [(x,y) for x in locations for y in locations]
+            # now remove the ones have already tested
+            for dimensions, stagger in dimensions_staggers:
+                if stagger is not None:
+                    index = fail_staggers.index(stagger)
+                    del fail_staggers[index]
+            boutcore.setOption('failmesh:nx', '8', force=True)
+            boutcore.setOption('failmesh:ny', '4', force=True)
+            boutcore.setOption('failmesh:nz', '4', force=True)
+            boutcore.setOption('failmesh:staggergrids', 'true', force=True)
+            failmesh = boutcore.Mesh(section='failmesh')
+            for stagger in fail_staggers:
+                # check that an exception is throw for combinations of directions that we expect to fail
+                try:
+                    test = test_operator(numpy.array([4, 8]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, stagger, mesh_in=failmesh)
+                except RuntimeError:
+                    result += ['pass']
+                else:
+                    result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+'->'+stagger[1]+' '+' '+str(ftype)+' '+str(method)+' but it did not.']
 
     return result
 
-def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger, mesh_in=None):
+def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, ftypes, method, stagger, mesh_in=None):
 
     error_list = []
     print('testing',boutcore_operator, stagger)
@@ -206,18 +219,35 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
             outloc = stagger[2]
 
         # calculate result of differential operator using BOUT++ implementation
-        bout_input1 = boutcore.create3D(testfunc1, mesh, outloc=vloc)
-        bout_input2 = boutcore.create3D(testfunc2, mesh, outloc=inloc)
+        if ftype[0] == '2D':
+            # cannot have z-dependence
+            testfunc1.replace('z', '0')
+            bout_input1 = boutcore.create2D(testfunc1, mesh, outloc=inloc)
+        elif ftype[0] == '3D':
+            bout_input1 = boutcore.create3D(testfunc1, mesh, outloc=inloc)
+        else:
+            raise ValueError('Unexpected ftype argument '+str(ftype[0]))
+        if ftype[1] == '2D':
+            # cannot have z-dependence
+            testfunc2.replace('z', '0')
+            bout_input2 = boutcore.create2D(testfunc2, mesh, outloc=inloc)
+        elif ftype[1] == '3D':
+            bout_input2 = boutcore.create3D(testfunc2, mesh, outloc=inloc)
+        else:
+            raise ValueError('Unexpected ftype argument '+str(ftype[1]))
         if method is None:
             bout_result = boutcore_operator(bout_input1, bout_input2, outloc=outloc)
         else:
             bout_result = boutcore_operator(bout_input1, bout_input2, outloc=outloc, method=method)
 
-        # calculate result of differential operator symbolically, then convert to boutcore.Field3D
+        # calculate result of differential operator symbolically, then convert to boutcore.Field3D/Field2D
         analytic_input1 = sympy.sympify(testfunc1)
         analytic_input2 = sympy.sympify(testfunc2)
         analytic_func = symbolic_operator(analytic_input1, analytic_input2)
-        analytic_result = boutcore.create3D(exprToStr(analytic_func), mesh, outloc=outloc)
+        if ftype[0] == '2D' and ftype[1] == '2D':
+            analytic_result = boutcore.create2D(exprToStr(analytic_func), mesh, outloc=outloc)
+        else:
+            analytic_result = boutcore.create3D(exprToStr(analytic_func), mesh, outloc=outloc)
 
         # calculate max error
         error = bout_result - analytic_result # as Field3D
@@ -239,7 +269,7 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
             showdata([error, bout_result.get()[mxg:-mxg, myg:-myg], analytic_result.get()[mxg:-mxg, myg:-myg]])
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+' '+str(method)+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
-def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, testfunc2, boutcore_operator, symbolic_operator, order, method=None):
+def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, testfunc2, boutcore_operator, symbolic_operator, order, types, method=None):
     # all derivatives at same inloc/outloc should work
     dimensions_staggers = [(base_dimensions, None), # no staggering
                            (base_dimensions+'x', ('CENTRE', 'CENTRE', 'CENTRE')), # include all-centred, but with StaggerGrids=true
@@ -280,33 +310,34 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
         dimensions_staggers += [(base_dimensions+'z', ('CENTRE', 'ZLOW', 'ZLOW')),
                                 (base_dimensions+'z', ('ZLOW', 'CENTRE', 'CENTRE'))]
     result = []
-    for dimensions, stagger in dimensions_staggers:
-        result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
-
-    if test_throw:
-        # check that unsupported combinations of locations throw an exception
-
-        locations = ['CENTRE', 'XLOW', 'YLOW', 'ZLOW']
-        # first make a list of all permutations
-        fail_staggers = [(x,y,z) for x in locations for y in locations for z in locations]
-        # now remove the ones have already tested
+    for ftypes in types:
         for dimensions, stagger in dimensions_staggers:
-            if stagger is not None:
-                index = fail_staggers.index(stagger)
-                del fail_staggers[index]
-        boutcore.setOption('failmesh:nx', '8', force=True)
-        boutcore.setOption('failmesh:ny', '4', force=True)
-        boutcore.setOption('failmesh:nz', '4', force=True)
-        boutcore.setOption('failmesh:staggergrids', 'true', force=True)
-        failmesh = boutcore.Mesh(section='failmesh')
-        for stagger in fail_staggers:
-            # check that an exception is throw for combinations of directions that we expect to fail
-            try:
-                test = test_operator2(numpy.array([4, 8]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger, mesh_in=failmesh)
-            except RuntimeError:
-                result += ['pass']
-            else:
-                result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+','+stagger[1]+'->'+stagger[2]+' '+str(method)+' but it did not.']
+            result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, types, method, stagger)
+
+        if test_throw:
+            # check that unsupported combinations of locations throw an exception
+
+            locations = ['CENTRE', 'XLOW', 'YLOW', 'ZLOW']
+            # first make a list of all permutations
+            fail_staggers = [(x,y,z) for x in locations for y in locations for z in locations]
+            # now remove the ones have already tested
+            for dimensions, stagger in dimensions_staggers:
+                if stagger is not None:
+                    index = fail_staggers.index(stagger)
+                    del fail_staggers[index]
+            boutcore.setOption('failmesh:nx', '8', force=True)
+            boutcore.setOption('failmesh:ny', '4', force=True)
+            boutcore.setOption('failmesh:nz', '4', force=True)
+            boutcore.setOption('failmesh:staggergrids', 'true', force=True)
+            failmesh = boutcore.Mesh(section='failmesh')
+            for stagger in fail_staggers:
+                # check that an exception is throw for combinations of directions that we expect to fail
+                try:
+                    test = test_operator2(numpy.array([4, 8]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, types, method, stagger, mesh_in=failmesh)
+                except RuntimeError:
+                    result += ['pass']
+                else:
+                    result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+','+stagger[1]+'->'+stagger[2]+' '+str(method)+' but it did not.']
 
     return result
 
@@ -341,24 +372,38 @@ boutcore.init('-q -q -q -q')
 results = []
 
 # single-argument operators
-results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Grad_par, Grad_par, order)
-results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Div_par, Div_par, order)
-results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Grad2_par2, Grad2_par2, order)
-results += cycle_staggering('', 'xyz', ngrids, testfunc, boutcore.Laplace, Laplace, order) # Laplace is only implemented inloc=outloc
-results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Laplace_par, Laplace_par, order) # Laplace is only implemented inloc=outloc
+all_types = ('2D', '3D') # eventually, should be able to use this when Field2D operators support staggering properly
+type_3d = ('3D',)
+type_2d = ('2D',)
+results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Grad_par, Grad_par, order, type_3d) # staggering in y-direction allowed
+results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.Grad_par, Grad_par, order, type_2d) # no staggering allowed
+results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Div_par, Div_par, order, type_3d) # staggering in y-direction allowed
+results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.Div_par, Div_par, order, type_2d) # no staggering allowed
+results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Grad2_par2, Grad2_par2, order, type_3d) # staggering in y-direction allowed
+results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.Grad2_par2, Grad2_par2, order, type_2d) # no staggering allowed
+results += cycle_staggering('', 'xyz', ngrids, testfunc, boutcore.Laplace, Laplace, order, all_types) # no staggering allowed
+results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.Laplace_par, Laplace_par, order, type_3d) # staggering in y-direction allowed
+results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.Laplace_par, Laplace_par, order, type_2d) # no staggering allowed
 # note Laplace_perp uses Laplace, so needs y-dimension refinement to converge
-results += cycle_staggering('', 'xyz', ngrids, testfunc, boutcore.Laplace_perp, Laplace_perp, order) # Laplace is only implemented inloc=outloc
+results += cycle_staggering('', 'xyz', ngrids, testfunc, boutcore.Laplace_perp, Laplace_perp, order, all_types) # no staggering allowed
 # Delp2 uses the global mesh, which we can't reset, so can't test here
 #results += cycle_staggering('x', 'xz', ngrids, testfunc, boutcore.Delp2, Delp2, order)
 
 # two-argument operators
-results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Vpar_Grad_par, Vpar_Grad_par, order)
-results += cycle_staggering2('yy', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_K_Grad_par, Div_par_K_Grad_par, order)
-results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1)
-results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), order, method='C2')
-results += cycle_staggering2('', 'xz', ngrids, testfunc, testfunc2, boutcore.bracket, bracket, order, method='BRACKET_ARAKAWA')
+all_types = [('2D', '2D'), ('3D', '3D')] # expand this to include mixed 2D/3D types at some point
+types_2d = ('2D', '2D')
+types_3d = ('3D', '3D')
+results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Vpar_Grad_par, Vpar_Grad_par, order, types_3d) # some staggering in y-direction allowed
+results += cycle_staggering2('', 'y', ngrids, testfunc, testfunc2, boutcore.Vpar_Grad_par, Vpar_Grad_par, order, types_2d) # no staggering allowed
+results += cycle_staggering2('yy', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_K_Grad_par, Div_par_K_Grad_par, order, types_3d) # any staggering in y-direction allowed
+results += cycle_staggering2('', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_K_Grad_par, Div_par_K_Grad_par, order, types_2d) # no staggering allowed
+results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1, types_3d) # some staggering in y-direction allowed
+results += cycle_staggering2('', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1, types_2d) # no staggering allowed
+results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), order, types_3d, method='C2') # some staggering in y-direction allowed
+results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), order, types_2d, method='C2') # no staggering allowed
+results += cycle_staggering2('', 'xz', ngrids, testfunc, testfunc2, boutcore.bracket, bracket, order, all_types, method='BRACKET_ARAKAWA') # no staggering allowed
 # note BRACKET_STD version of bracket includes parallel derivatives, so needs y-dimension refinement to converge
-results += cycle_staggering2('', 'xyz', ngrids, testfunc, testfunc2, boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, method='BRACKET_STD')
+results += cycle_staggering2('', 'xyz', ngrids, testfunc, testfunc2, boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, all_types, method='BRACKET_STD') # no staggering allowed
 
 # check results of tests
 fail = False
