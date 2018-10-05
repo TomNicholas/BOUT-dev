@@ -1242,7 +1242,7 @@ EOF
 
 for d in X Y Z
 do
-    for f in DDd D2Dd2
+    for f in DDd D2Dd2 D4Dd4
     do
         in1="field"
         args=", outloc_, method_, region_"
