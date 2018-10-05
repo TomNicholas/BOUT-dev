@@ -471,9 +471,10 @@ results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div
 results += cycle_staggering2('', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), 1, types_2d) # no staggering allowed
 results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), order, types_3d, method='C2') # some staggering in y-direction allowed
 results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_flux, lambda v,f: Div_par(v*f), order, types_2d, method='C2') # no staggering allowed
-results += cycle_staggering2('', 'xz', ngrids, testfunc, testfunc2, boutcore.bracket, bracket, order, all_types, method='BRACKET_ARAKAWA') # no staggering allowed
+# note bracket(Field2D, Field2D) is exactly zero, so doesn't make sense to MMS test
+results += cycle_staggering2('', 'xz', ngrids, testfunc, testfunc2, boutcore.bracket, bracket, order, types_3d, method='BRACKET_ARAKAWA') # no staggering allowed
 # note BRACKET_STD version of bracket includes parallel derivatives, so needs y-dimension refinement to converge
-results += cycle_staggering2('', 'xyz', ngrids, testfunc, testfunc2, boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, all_types, method='BRACKET_STD') # no staggering allowed
+results += cycle_staggering2('', 'xyz', ngrids, testfunc, testfunc2, boutcore.bracket, lambda a,b: b0xGrad_dot_Grad(a,b)/metric.B, order, types_3d, method='BRACKET_STD') # no staggering allowed
 
 # check results of tests
 fail = False
