@@ -501,7 +501,7 @@ class BaseTokamak(object):
         # check average of expr is 1.
         average = integrate(expr, (x, 0, 1), (y, 0, 2*pi))/2/pi
         if not average == 1:
-            raise ValueError("scalex must average to 1")
+            raise ValueError("scalex must average to 1. Got "+str(average))
         else:
             metric.scalex = expr
 
@@ -509,7 +509,7 @@ class BaseTokamak(object):
         # check average of expr is 1.
         average = integrate(expr, (x, 0, 1), (y, 0, 2*pi))/2/pi
         if not average == 1:
-            raise ValueError("scaley must average to 1")
+            raise ValueError("scaley must average to 1. Got "+str(average))
         else:
             metric.scaley = expr
 
