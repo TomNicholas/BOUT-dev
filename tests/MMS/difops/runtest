@@ -21,7 +21,7 @@ tokamak = SimpleTokamak()
 tokamak.set_scalex(1 + .1*sin(2*pi*metric.x+metric.y))
 tokamak.set_scaley(1 + .1*sin(2*pi*metric.x-metric.y))
 
-def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, stagger, mesh_in=None):
+def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, method, stagger, mesh_in=None):
 
     error_list = []
     print('testing',boutcore_operator, ftype, stagger)
@@ -85,7 +85,10 @@ def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_oper
             bout_input = boutcore.create3D(testfunc, mesh, outloc=inloc)
         else:
             raise ValueError('Unexpected ftype argument '+str(ftype))
-        bout_result = boutcore_operator(bout_input, outloc=outloc)
+        if method is None:
+            bout_result = boutcore_operator(bout_input, outloc=outloc)
+        else:
+            bout_result = boutcore_operator(bout_input, outloc=outloc, method=method)
 
         # calculate result of differential operator symbolically, then convert to boutcore.Field3D/Field2D
         analytic_input = sympy.sympify(testfunc)
@@ -117,7 +120,7 @@ def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_oper
             showdata(error)
         return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
-def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, boutcore_operator, symbolic_operator, order, types):
+def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, boutcore_operator, symbolic_operator, order, types, method=None):
     """
     Loop over different parameters, calling test_operator for each
 
@@ -166,7 +169,7 @@ def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, bout
     result = []
     for ftype in types:
         for dimensions, stagger in dimensions_staggers:
-            result += test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, stagger)
+            result += test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, method, stagger)
 
         if test_throw:
             # check that unsupported combinations of locations throw an exception
@@ -187,7 +190,7 @@ def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, bout
             for stagger in fail_staggers:
                 # check that an exception is throw for combinations of directions that we expect to fail
                 try:
-                    test = test_operator(numpy.array([4, 8]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, stagger, mesh_in=failmesh)
+                    test = test_operator(numpy.array([4, 8]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, method, stagger, mesh_in=failmesh)
                 except RuntimeError:
                     result += ['pass']
                 else:
