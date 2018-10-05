@@ -17,6 +17,10 @@ from sys import exit
 # geometry for simple circular tokamak
 tokamak = SimpleTokamak()
 
+# rescale x and y coordinates so dx and dy are not constants
+tokamak.set_scalex(1 + .1*sin(2*pi*metric.x+metric.y))
+tokamak.set_scaley(1 + .1*sin(2*pi*metric.x-metric.y))
+
 def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, stagger, mesh_in=None):
 
     error_list = []
@@ -42,8 +46,8 @@ def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_oper
                 boutcore.setOption('testmesh:nz', exprToStr(n), force=True)
             else:
                 boutcore.setOption('testmesh:nz', exprToStr(default_n), force=True)
-            boutcore.setOption('testmesh:dx', exprToStr(metric.psiwidth/n), force=True)
-            boutcore.setOption('testmesh:dy', exprToStr(2.*pi/n), force=True)
+            boutcore.setOption('testmesh:dx', exprToStr(metric.psiwidth*metric.scalex/n), force=True)
+            boutcore.setOption('testmesh:dy', exprToStr(2.*pi*metric.scaley/n), force=True)
             boutcore.setOption('testmesh:dz', exprToStr(2.*pi/n), force=True)
             boutcore.setOption('testmesh:g11', exprToStr(metric.g11), force=True)
             boutcore.setOption('testmesh:g22', exprToStr(metric.g22), force=True)
