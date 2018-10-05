@@ -220,8 +220,8 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
                 boutcore.setOption('testmesh:nz', exprToStr(n), force=True)
             else:
                 boutcore.setOption('testmesh:nz', exprToStr(default_n), force=True)
-            boutcore.setOption('testmesh:dx', exprToStr(metric.psiwidth/n), force=True)
-            boutcore.setOption('testmesh:dy', exprToStr(2.*pi/n), force=True)
+            boutcore.setOption('testmesh:dx', exprToStr(metric.psiwidth*metric.scalex/n), force=True)
+            boutcore.setOption('testmesh:dy', exprToStr(2.*pi*metric.scaley/n), force=True)
             boutcore.setOption('testmesh:dz', exprToStr(2.*pi/n), force=True)
             boutcore.setOption('testmesh:g11', exprToStr(metric.g11), force=True)
             boutcore.setOption('testmesh:g22', exprToStr(metric.g22), force=True)
@@ -301,7 +301,7 @@ def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, 
             pyplot.show()
             from boututils.showdata import showdata
             showdata([error, bout_result.get()[mxg:-mxg, myg:-myg], analytic_result.get()[mxg:-mxg, myg:-myg]])
-        return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+' '+str(method)+'. Expected '+str(order)+', got '+str(convergence)+'.']
+        return [str(boutcore_operator)+' is not working for '+inloc+'->'+outloc+' '+str(ftypes)+' '+str(method)+'. Expected '+str(order)+', got '+str(convergence)+'.']
 
 def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, testfunc2, boutcore_operator, symbolic_operator, order, types, method=None):
     """
@@ -407,7 +407,7 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
                 except RuntimeError:
                     result += ['pass']
                 else:
-                    result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+','+stagger[1]+'->'+stagger[2]+' '+str(method)+' but it did not.']
+                    result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+','+stagger[1]+'->'+stagger[2]+' '+str(ftypes)+' '+str(method)+' but it did not.']
 
     return result
 
