@@ -1229,7 +1229,7 @@ const Field3D Mesh::indexDDX(const Field3D &f, CELL_LOC outloc, DIFF_METHOD meth
 
 const Field2D Mesh::indexDDX(const Field2D &f, CELL_LOC outloc,
                              DIFF_METHOD method, REGION region) {
-  ASSERT1(outloc == CELL_DEFAULT || outloc == f.getLocation());
+  ASSERT0(outloc == CELL_DEFAULT || outloc == f.getLocation());
   ASSERT1(method == DIFF_DEFAULT);
   return applyXdiff(f, fDDX, f.getLocation(), region);
 }
@@ -1285,7 +1285,7 @@ const Field3D Mesh::indexDDY(const Field3D &f, CELL_LOC outloc,
 
 const Field2D Mesh::indexDDY(const Field2D &f, CELL_LOC outloc,
                              DIFF_METHOD method, REGION region) {
-  ASSERT1(outloc == CELL_DEFAULT || outloc == f.getLocation());
+  ASSERT0(outloc == CELL_DEFAULT || outloc == f.getLocation());
   ASSERT1(method == DIFF_DEFAULT);
   return applyYdiff(f, fDDY, f.getLocation(), region);
 }
@@ -3278,6 +3278,9 @@ const Field3D Mesh::indexFDDZ(const Field3D &v, const Field3D &f, CELL_LOC outlo
       throw BoutException("Unhandled shift in indexFDDZ");
     }
   }
+
+  // result will be calculated at diffloc, so this must be the same as outloc
+  ASSERT0(diffloc == outloc);
 
   if (method != DIFF_DEFAULT) {
     // Lookup function
