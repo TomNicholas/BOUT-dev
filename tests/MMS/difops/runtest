@@ -121,27 +121,31 @@ def cycle_staggering(stagger_directions, base_dimensions, ngrids, testfunc, bout
     for dimensions, stagger in dimensions_staggers:
         result += test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger)
 
-    locations = ['CENTRE', 'XLOW', 'YLOW', 'ZLOW']
-    # first make a list of all permutations
-    fail_staggers = [(x,y) for x in locations for y in locations]
-    # now remove the ones have already tested
-    for dimensions, stagger in dimensions_staggers:
-        if stagger is not None:
-            index = fail_staggers.index(stagger)
-            del fail_staggers[index]
-    boutcore.setOption('failmesh:nx', '8', force=True)
-    boutcore.setOption('failmesh:ny', '4', force=True)
-    boutcore.setOption('failmesh:nz', '4', force=True)
-    boutcore.setOption('failmesh:staggergrids', 'true', force=True)
-    failmesh = boutcore.Mesh(section='failmesh')
-    for stagger in fail_staggers:
-        # check that an exception is throw for combinations of directions that we expect to fail
-        try:
-            test = test_operator(numpy.array([4, 8]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger, mesh_in=failmesh)
-        except RuntimeError:
-            result += ['pass']
-        else:
-            result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+'->'+stagger[1]+' '+str(method)+' but it did not.']
+    if test_throw:
+        # check that unsupported combinations of locations throw an exception
+
+        locations = ['CENTRE', 'XLOW', 'YLOW', 'ZLOW']
+        # first make a list of all permutations
+        fail_staggers = [(x,y) for x in locations for y in locations]
+        # now remove the ones have already tested
+        for dimensions, stagger in dimensions_staggers:
+            if stagger is not None:
+                index = fail_staggers.index(stagger)
+                del fail_staggers[index]
+        boutcore.setOption('failmesh:nx', '8', force=True)
+        boutcore.setOption('failmesh:ny', '4', force=True)
+        boutcore.setOption('failmesh:nz', '4', force=True)
+        boutcore.setOption('failmesh:staggergrids', 'true', force=True)
+        failmesh = boutcore.Mesh(section='failmesh')
+        for stagger in fail_staggers:
+            # check that an exception is throw for combinations of directions that we expect to fail
+            try:
+                test = test_operator(numpy.array([4, 8]), testfunc, dimensions, boutcore_operator, symbolic_operator, order, stagger, mesh_in=failmesh)
+            except RuntimeError:
+                result += ['pass']
+            else:
+                result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+'->'+stagger[1]+' '+str(method)+' but it did not.']
+
     return result
 
 def test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger, mesh_in=None):
@@ -279,27 +283,31 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
     for dimensions, stagger in dimensions_staggers:
         result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger)
 
-    locations = ['CENTRE', 'XLOW', 'YLOW', 'ZLOW']
-    # first make a list of all permutations
-    fail_staggers = [(x,y,z) for x in locations for y in locations for z in locations]
-    # now remove the ones have already tested
-    for dimensions, stagger in dimensions_staggers:
-        if stagger is not None:
-            index = fail_staggers.index(stagger)
-            del fail_staggers[index]
-    boutcore.setOption('failmesh:nx', '8', force=True)
-    boutcore.setOption('failmesh:ny', '4', force=True)
-    boutcore.setOption('failmesh:nz', '4', force=True)
-    boutcore.setOption('failmesh:staggergrids', 'true', force=True)
-    failmesh = boutcore.Mesh(section='failmesh')
-    for stagger in fail_staggers:
-        # check that an exception is throw for combinations of directions that we expect to fail
-        try:
-            test = test_operator2(numpy.array([4, 8]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger, mesh_in=failmesh)
-        except RuntimeError:
-            result += ['pass']
-        else:
-            result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+','+stagger[1]+'->'+stagger[2]+' '+str(method)+' but it did not.']
+    if test_throw:
+        # check that unsupported combinations of locations throw an exception
+
+        locations = ['CENTRE', 'XLOW', 'YLOW', 'ZLOW']
+        # first make a list of all permutations
+        fail_staggers = [(x,y,z) for x in locations for y in locations for z in locations]
+        # now remove the ones have already tested
+        for dimensions, stagger in dimensions_staggers:
+            if stagger is not None:
+                index = fail_staggers.index(stagger)
+                del fail_staggers[index]
+        boutcore.setOption('failmesh:nx', '8', force=True)
+        boutcore.setOption('failmesh:ny', '4', force=True)
+        boutcore.setOption('failmesh:nz', '4', force=True)
+        boutcore.setOption('failmesh:staggergrids', 'true', force=True)
+        failmesh = boutcore.Mesh(section='failmesh')
+        for stagger in fail_staggers:
+            # check that an exception is throw for combinations of directions that we expect to fail
+            try:
+                test = test_operator2(numpy.array([4, 8]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, method, stagger, mesh_in=failmesh)
+            except RuntimeError:
+                result += ['pass']
+            else:
+                result += ['Expected '+str(boutcore_operator)+' to throw for '+stagger[0]+','+stagger[1]+'->'+stagger[2]+' '+str(method)+' but it did not.']
+
     return result
 
 # test if CHECK level is high enough for location comparison checks to be
@@ -326,6 +334,7 @@ testfunc = 'cos(y+x)'
 testfunc2 = 'sin(4*pi*x+2*y+2*z)+cos(2*pi*x-z)'
 order = 2
 plot_error = False
+test_throw = True
 
 boutcore.init('-q -q -q -q')
 
