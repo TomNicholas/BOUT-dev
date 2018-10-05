@@ -382,7 +382,7 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
     result = []
     for ftypes in types:
         for dimensions, stagger in dimensions_staggers:
-            result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, types, method, stagger)
+            result += test_operator2(ngrids, testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, ftypes, method, stagger)
 
         if test_throw:
             # check that unsupported combinations of locations throw an exception
@@ -403,7 +403,7 @@ def cycle_staggering2(stagger_directions, base_dimensions, ngrids, testfunc1, te
             for stagger in fail_staggers:
                 # check that an exception is throw for combinations of directions that we expect to fail
                 try:
-                    test = test_operator2(numpy.array([4, 8]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, types, method, stagger, mesh_in=failmesh)
+                    test = test_operator2(numpy.array([4, 8]), testfunc1, testfunc2, dimensions, boutcore_operator, symbolic_operator, order, ftypes, method, stagger, mesh_in=failmesh)
                 except RuntimeError:
                     result += ['pass']
                 else:
@@ -461,8 +461,8 @@ results += cycle_staggering('', 'xyz', ngrids, testfunc, boutcore.Laplace_perp, 
 
 # two-argument operators
 all_types = [('2D', '2D'), ('3D', '3D')] # expand this to include mixed 2D/3D types at some point
-types_2d = ('2D', '2D')
-types_3d = ('3D', '3D')
+types_2d = [('2D', '2D')]
+types_3d = [('3D', '3D')]
 results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.Vpar_Grad_par, Vpar_Grad_par, order, types_3d) # some staggering in y-direction allowed
 results += cycle_staggering2('', 'y', ngrids, testfunc, testfunc2, boutcore.Vpar_Grad_par, Vpar_Grad_par, order, types_2d) # no staggering allowed
 results += cycle_staggering2('yy', 'y', ngrids, testfunc, testfunc2, boutcore.Div_par_K_Grad_par, Div_par_K_Grad_par, order, types_3d) # any staggering in y-direction allowed
