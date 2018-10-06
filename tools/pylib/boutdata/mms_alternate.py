@@ -67,13 +67,25 @@ def DDZ(f):
 
 
 def D2DX2(f):
-    return diff(f, metric.x, 2)/metric.psiwidth**2/metric.scalex**2
+    return DDX(DDX(f))
 
 def D2DY2(f):
-    return diff(f, metric.y, 2)/metric.scaley**2
+    return DDY(DDY(f))
 
 def D2DZ2(f):
-    return diff(f, metric.z, 2)*metric.zperiod**2
+    return DDZ(DDZ(f))
+
+
+# don't include derivatives of scalex/scaley, to match BOUT++ implementation
+# where D4D*4 are used just for numerical 'hyperdiffusion'
+def D4DX4(f):
+    return diff(f, metric.x, 4)/metric.psiwidth**4/metric.scalex**4
+
+def D4DY4(f):
+    return diff(f, metric.y, 4)/metric.scaley**4
+
+def D4DZ4(f):
+    return diff(f, metric.z, 4)*metric.zperiod**4
 
 
 def D2DXDY(f):
