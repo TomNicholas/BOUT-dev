@@ -21,6 +21,8 @@ tokamak = SimpleTokamak()
 # rescale x and y coordinates so dx and dy are not constants
 tokamak.set_scalex(1 + .1*sin(2*pi*metric.x+metric.y))
 tokamak.set_scaley(1 + .1*sin(2*pi*metric.x-metric.y))
+# re-calculate metric terms
+tokamak.metric()
 
 def test_operator(ngrids, testfunc, dimensions, boutcore_operator, symbolic_operator, order, ftype, method, stagger, mesh_in=None):
 
