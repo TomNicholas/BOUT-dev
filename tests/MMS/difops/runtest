@@ -495,11 +495,11 @@ if test_deriv_ops:
     results += cycle_staggering('y', 'y', ngrids, testfunc, boutcore.D2DY2, D2DY2, order, type_3d)
     results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.D2DY2, D2DY2, order, type_2d)
     results += cycle_staggering('', 'z', ngrids, testfunc, boutcore.D2DZ2, D2DZ2, order, type_3d, method='C2')
-    results += cycle_staggering('', 'x', ngrids, testfunc, boutcore.D4DX4, lambda f: D2DX2(D2DX2(f)), order, type_3d)
-    results += cycle_staggering('', 'x', ngrids, testfunc, boutcore.D4DX4, lambda f: D2DX2(D2DX2(f)), order, type_2d)
-    results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.D4DY4, lambda f: D2DY2(D2DY2(f)), order, type_3d)
-    results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.D4DY4, lambda f: D2DY2(D2DY2(f)), order, type_2d)
-    results += cycle_staggering('', 'z', ngrids, testfunc, boutcore.D4DZ4, lambda f: D2DZ2(D2DZ2(f)), order, type_3d) # D4DZ4 is hard coded to use DIFF_C2
+    results += cycle_staggering('', 'x', ngrids, testfunc, boutcore.D4DX4, D4DX4, order, type_3d)
+    results += cycle_staggering('', 'x', ngrids, testfunc, boutcore.D4DX4, D4DX4, order, type_2d)
+    results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.D4DY4, D4DY4, order, type_3d)
+    results += cycle_staggering('', 'y', ngrids, testfunc, boutcore.D4DY4, D4DY4, order, type_2d)
+    results += cycle_staggering('', 'z', ngrids, testfunc, boutcore.D4DZ4, D4DZ4, order, type_3d) # D4DZ4 is hard coded to use DIFF_C2
     results += cycle_staggering2('x', 'x', ngrids, testfunc, testfunc2, boutcore.VDDX, lambda v,f: v*DDX(f), order, types_3d)
     results += cycle_staggering2('', 'x', ngrids, testfunc, testfunc2, boutcore.VDDX, lambda v,f: v*DDX(f), order, types_2d)
     results += cycle_staggering2('y', 'y', ngrids, testfunc, testfunc2, boutcore.VDDY, lambda v,f: v*DDY(f), order, types_3d)
